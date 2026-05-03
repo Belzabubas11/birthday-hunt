@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Gimtadienio žaidimas</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overflow:hidden}
+body{font-family:'DM Sans',sans-serif;background:#0a0a0f;color:#f0ede8;height:100%;display:flex;flex-direction:column}
+:root{--pink:#e8547a;--gold:#f0c060;--card:#14141c;--border:#2a2a3a;--muted:#8a8a9a;--green:#50d090}
+.screen{display:none;height:100%;flex-direction:column;overflow:hidden}
+.screen.active{display:flex}
+
+/* LOGIN */
+#login{align-items:center;justify-content:center;text-align:center;padding:2rem;background:radial-gradient(ellipse at 50% 0%,#2a0a1a 0%,#0a0a0f 70%);overflow-y:auto}
+.float{animation:float 3s ease-in-out infinite;font-size:3rem;margin-bottom:1rem}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+#login h1{font-family:'Playfair Display',serif;font-size:2rem;color:var(--gold);margin-bottom:.4rem}
+#login p{color:var(--muted);font-size:.9rem;margin-bottom:2rem}
+.login-box{width:100%;max-width:320px;display:flex;flex-direction:column;gap:.875rem}
+.code-input{background:var(--card);border:1px solid var(--border);color:#f0ede8;padding:1.1rem 1rem;border-radius:12px;font-family:'DM Sans',sans-serif;font-size:1.1rem;outline:none;width:100%;text-align:center;letter-spacing:.15em;text-transform:uppercase;-webkit-appearance:none}
+.code-input:focus{border-color:var(--pink)}
+.code-input::placeholder{letter-spacing:normal;text-transform:none;color:var(--muted);font-size:.9rem}
+.login-btn{background:var(--pink);color:#fff;border:none;padding:1rem;border-radius:12px;font-family:'DM Sans',sans-serif;font-size:1rem;font-weight:500;cursor:pointer;width:100%}
+.login-btn:active{opacity:.85}
+.login-err{color:#d05050;font-size:.85rem;display:none;padding:.5rem}
+.login-err.show{display:block}
+
+/* GAME */
+.g-header{background:var(--card);border-bottom:1px solid var(--border);padding:1rem 1.25rem;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.team-pill{font-size:.75rem;font-weight:500;padding:5px 14px;border-radius:20px;color:#fff;white-space:nowrap}
+.g-right{display:flex;align-items:center;gap:.75rem}
+.g-score{font-family:'Playfair Display',serif;font-size:1.2rem;color:var(--gold)}
+.logout-btn{background:transparent;border:1px solid var(--border);color:var(--muted);padding:4px 10px;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:.72rem;cursor:pointer}
+.progress-bar{height:3px;background:var(--border);flex-shrink:0}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--pink),var(--gold));transition:width .5s}
+.tabs{display:flex;border-bottom:1px solid var(--border);flex-shrink:0}
+.tab{flex:1;padding:.875rem;text-align:center;font-size:.85rem;cursor:pointer;color:var(--muted);border-bottom:2px solid transparent}
+.tab.active{color:var(--gold);border-bottom-color:var(--gold)}
+#main-panel{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch}
+#bonus-panel{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;display:none}
+
+/* QUESTIONS */
+.q-content{padding:1.25rem;display:flex;flex-direction:column;gap:1.1rem;padding-bottom:2rem}
+.location-tag{display:inline-flex;align-items:center;gap:6px;background:#1a1020;border:1px solid #3a2040;color:#c090e0;font-size:.78rem;padding:5px 14px;border-radius:20px}
+.q-num{font-size:.75rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-top:.25rem}
+.q-text{font-family:'Playfair Display',serif;font-size:1.25rem;line-height:1.5}
+.hint-box{background:var(--card);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+.hint-row{padding:.85rem 1rem;display:flex;align-items:center;justify-content:space-between;cursor:pointer;font-size:.85rem;user-select:none}
+.hint-row span{color:var(--muted)}
+.hint-pill{font-size:.72rem;color:var(--gold);background:#1a160a;padding:4px 12px;border-radius:20px;border:1px solid #3a2a0a;white-space:nowrap}
+.hint-pill.used{color:var(--muted);background:transparent;border-color:var(--border)}
+.hint-body{padding:.875rem 1rem;border-top:1px solid var(--border);font-size:.9rem;color:#c0bdb8;display:none;line-height:1.5}
+.hint-body.open{display:block}
+.fb{border-radius:12px;padding:.875rem 1rem;font-size:.9rem;display:none;align-items:center;gap:.5rem}
+.fb.ok{background:#0a2010;border:1px solid #1a5030;color:var(--green)}
+.fb.err{background:#200a0a;border:1px solid #501010;color:#d05050}
+.fb.show{display:flex}
+.ans-input{background:var(--card);border:1px solid var(--border);color:#f0ede8;padding:1rem;border-radius:12px;font-family:'DM Sans',sans-serif;font-size:1rem;outline:none;width:100%;-webkit-appearance:none}
+.ans-input:focus{border-color:var(--pink)}
+.submit-btn{background:var(--pink);color:#fff;border:none;padding:1rem;border-radius:12px;font-family:'DM Sans',sans-serif;font-size:1rem;font-weight:500;cursor:pointer;width:100%}
+.submit-btn:active{opacity:.85}
+.skip-btn{background:transparent;border:1px solid var(--border);color:var(--muted);padding:.8rem;border-radius:12px;font-family:'DM Sans',sans-serif;font-size:.85rem;cursor:pointer;width:100%}
+
+/* BONUS */
+.bonus-content{padding:1.25rem;display:flex;flex-direction:column;gap:1.25rem;padding-bottom:2rem}
+.bonus-header-row{display:flex;align-items:center;justify-content:space-between;padding-bottom:.875rem;border-bottom:1px solid var(--border)}
+.bonus-card{background:var(--card);border:1px solid var(--border);border-radius:14px;overflow:hidden}
+.bonus-card-body{padding:1.1rem}
+.bonus-title{font-weight:500;font-size:.95rem;margin-bottom:.35rem;line-height:1.4}
+.bonus-label{font-size:.75rem;color:var(--muted);margin-bottom:.875rem}
+.upload-btn{display:flex;align-items:center;justify-content:center;gap:.625rem;width:100%;padding:1rem;background:#1a1a2a;border:2px dashed var(--border);border-radius:12px;color:var(--muted);font-family:'DM Sans',sans-serif;font-size:.95rem;cursor:pointer}
+.upload-btn:active{border-color:var(--pink);color:var(--pink)}
+.photo-preview{width:100%;height:auto;display:block;border-top:1px solid var(--border)}
+.photo-actions{padding:.75rem 1.1rem;display:flex;align-items:center;justify-content:space-between;border-top:1px solid var(--border)}
+.photo-actions span{font-size:.78rem;color:var(--green)}
+.replace-btn{background:transparent;border:1px solid var(--border);color:var(--muted);padding:.45rem 1rem;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:.78rem;cursor:pointer}
+
+/* COMPLETE */
+#complete{align-items:center;justify-content:center;text-align:center;padding:2rem;background:radial-gradient(ellipse at 50% 30%,#1a0a0f 0%,#0a0a0f 70%);overflow-y:auto}
+#complete h1{font-family:'Playfair Display',serif;font-size:1.8rem;color:var(--gold);margin:1rem 0 .4rem}
+.final-big{font-family:'Playfair Display',serif;font-size:4.5rem;color:var(--pink);line-height:1}
+.final-sub{color:var(--muted);font-size:.9rem;margin:.5rem 0 2rem}
+.back-btn{background:transparent;border:1px solid var(--border);color:var(--muted);padding:.875rem;border-radius:12px;font-family:'DM Sans',sans-serif;font-size:.85rem;cursor:pointer;width:100%;max-width:300px;margin-top:.75rem}
+.continue-btn{background:var(--pink);color:#fff;border:none;padding:1rem 2rem;border-radius:12px;font-family:'DM Sans',sans-serif;font-size:1rem;font-weight:500;cursor:pointer;width:100%;max-width:300px;margin-bottom:.875rem;display:block}
+</style>
+</head>
+<body>
+
+<div id="login" class="screen active">
+  <div class="float">🎂</div>
+  <h1>Gimtadienio žaidimas</h1>
+  <p>Įveskite komandos kodą</p>
+  <div class="login-box">
+    <input class="code-input" id="code-input" placeholder="Komandos kodas" autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false" maxlength="20">
+    <button class="login-btn" onclick="doLogin()">Prisijungti</button>
+    <div class="login-err" id="login-err">Neteisingas kodas — patikrinkite su organizatoriumi</div>
+  </div>
+</div>
+
+<div id="game" class="screen">
+  <div class="g-header">
+    <span class="team-pill" id="g-pill">Komanda</span>
+    <div class="g-right">
+      <span class="g-score" id="g-score">0 pt</span>
+      <button class="logout-btn" onclick="doLogout()">Atsijungti</button>
+    </div>
+  </div>
+  <div class="progress-bar"><div class="progress-fill" id="g-progress" style="width:0%"></div></div>
+  <div class="tabs">
+    <div class="tab active" id="tab-main" onclick="switchTab('main')">Klausimai <span id="q-prog"></span></div>
+    <div class="tab" id="tab-bonus" onclick="switchTab('bonus')">Bonus nuotraukos</div>
+  </div>
+  <div id="main-panel"></div>
+  <div id="bonus-panel"></div>
+</div>
+
+<div id="complete" class="screen">
+  <div style="font-size:3rem;animation:float 3s ease-in-out infinite">🎉</div>
+  <h1>Maršrutas baigtas!</h1>
+  <div class="final-big" id="final-pts">0</div>
+  <div class="final-sub" id="final-sub">taškai</div>
+  <button class="continue-btn" onclick="showScreen('game');switchTab('bonus')">Tęsti bonus užduotis</button>
+  <button class="back-btn" onclick="doLogout()">Atsijungti</button>
+</div>
+
+<input type="file" id="file-input" accept="image/*" style="position:fixed;left:-9999px;top:-9999px;opacity:0;width:1px;height:1px">
+
+<script>
+// ── CONFIG — change codes before the event ────────────────────
+const SHEET_URL='https://script.google.com/macros/s/AKfycbxoNxSH-49UGFaZis1ouOWnuufbEtsDY4Jv3mpwoRpRTlx8GHoNECl4-J9Xj0AQD2O92Q/exec';
+
+const TEAM_CODES={
+  'PIRMA':  'car1',
+  'ANTRA':  'car2',
+  'TRECIA': 'car3',
+};
+
+const QUESTIONS=[
+  {id:0,location:"Katedros aikštė",text:"What Lithuanian Grand Duke's statue stands in the centre of this square?",answer:"gediminas",hints:["He founded Vilnius","His name is also the name of the main avenue nearby"]},
+  {id:1,location:"Užupis",text:"What is the name of the self-proclaimed republic in this neighbourhood?",answer:"užupis",hints:["It declared independence on April 1st","It has its own constitution printed on mirrors"]},
+  {id:2,location:"Bernardinų sodas",text:"What river runs along the edge of this park?",answer:"vilnelė",hints:["It's a small river, not the Neris","It gives Vilnius part of its name"]},
+  {id:3,location:"Pilies gatvė",text:"What is the name of the hill with the iconic tower visible from this street?",answer:"gedimino pilies kalnas",hints:["The tower is one of the symbols of Vilnius","Named after the same Grand Duke as the main avenue"]},
+  {id:4,location:"Halės turgus",text:"What does 'turgus' mean in English?",answer:"market",hints:["You buy food and goods here","Think farmers market"]},
+  {id:5,location:"Šv. Onos bažnyčia",text:"Which French emperor reportedly wanted to carry this church back to Paris in his palm?",answer:"napoleon",hints:["He conquered much of Europe","His surname is also a type of pastry"]},
+  {id:6,location:"Lukiškių aikštė",text:"What Soviet-era statue was removed from this square in 2015?",answer:"leninas",hints:["A monument to a famous communist leader","His first name was Vladimir"]},
+  {id:7,location:"Rotušės aikštė",text:"What building dominates this square, historically used as a theatre and courthouse?",answer:"rotušė",hints:["The square is named after it","'Rotušė' means town hall in Lithuanian"]},
+  {id:8,location:"Trijų Kryžių kalnas",text:"How many crosses stand on top of this hill?",answer:"3",hints:["The answer is in the hill's name","'Trijų kryžių' means 'of three crosses'"]},
+  {id:9,location:"Vilniaus universitetas",text:"In what century was Vilnius University founded?",answer:"16",hints:["One of the oldest universities in Northern Europe","Founded in the 1500s"]},
+];
+
+const BONUS=[
+  {id:'b1',text:"Nufotografuokite visą komandą darant žmogišką piramidę"},
+  {id:'b2',text:"Suraskite nepažįstamą žmogų ir nusifotografuokite — jis turi šypsotis"},
+  {id:'b3',text:"Atkurkite garaus paveikslo ar skulptūros pozą kartu"},
+  {id:'b4',text:"Suraskite ką nors gimtadienio merginos mėgstamiausios spalvos ir nusifotografuokite"},
+  {id:'b5',text:"Nufotografuokite visus šokančius vienu metu"},
+];
+
+const CARS=[
+  {id:'car1',name:'Pirmoji mašina',emoji:'🚗',color:'#e8547a',route:[0,1,2,3,4,5,6,7,8,9]},
+  {id:'car2',name:'Antroji mašina',emoji:'🚙',color:'#f0c060',route:[3,6,0,8,1,9,4,2,7,5]},
+  {id:'car3',name:'Trečioji mašina',emoji:'🏎️',color:'#60c0f0',route:[7,2,5,1,9,0,3,8,6,4]},
+];
+
+// ── SYNC TO GOOGLE SHEETS ─────────────────────────────────────
+function sync(data){
+  try{
+    const p=new URLSearchParams({
+      team:data.team||'',
+      question:data.question||'',
+      location:data.location||'',
+      points:String(data.points??''),
+      hints:String(data.hints??''),
+      action:data.action||''
+    });
+    fetch(SHEET_URL+'?'+p.toString(),{method:'GET',mode:'no-cors'}).catch(()=>{});
+  }catch(e){}
+}
+
+// ── STATE ─────────────────────────────────────────────────────
+function key(cid){return 'gz_'+cid;}
+function load(cid){
+  try{const s=localStorage.getItem(key(cid));if(s)return JSON.parse(s);}catch(e){}
+  return {score:0,q:0,answers:{},bonusDone:{}};
+}
+function persist(cid,s){try{localStorage.setItem(key(cid),JSON.stringify(s));}catch(e){}}
+
+const photos={};
+let cid=localStorage.getItem('gz_session')||null;
+let pendingBid=null;
+
+function calcPts(h){return h===0?3:h===1?2:1;}
+function getCar(){return CARS.find(c=>c.id===cid);}
+
+// ── LOGIN ─────────────────────────────────────────────────────
+function doLogin(){
+  const code=document.getElementById('code-input').value.trim().toUpperCase();
+  const role=TEAM_CODES[code];
+  if(!role){
+    const e=document.getElementById('login-err');
+    e.classList.add('show');
+    setTimeout(()=>e.classList.remove('show'),3000);
+    return;
+  }
+  localStorage.setItem('gz_session',role);
+  cid=role;
+  document.getElementById('code-input').value='';
+  const c=getCar();
+  document.getElementById('g-pill').textContent=c.name;
+  document.getElementById('g-pill').style.background=c.color;
+  show('game');
+  switchTab('main');
+}
+
+function doLogout(){
+  localStorage.removeItem('gz_session');
+  cid=null;
+  show('login');
+}
+
+document.getElementById('code-input').addEventListener('keydown',e=>{
+  if(e.key==='Enter'){e.preventDefault();doLogin();}
+});
+
+// ── SCREENS ───────────────────────────────────────────────────
+function show(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+// ── TABS ──────────────────────────────────────────────────────
+function switchTab(t){
+  document.getElementById('tab-main').classList.toggle('active',t==='main');
+  document.getElementById('tab-bonus').classList.toggle('active',t==='bonus');
+  document.getElementById('main-panel').style.display=t==='main'?'block':'none';
+  document.getElementById('bonus-panel').style.display=t==='bonus'?'block':'none';
+  if(t==='main')renderQ();
+  if(t==='bonus')renderBonus();
+}
+
+// ── HEADER ────────────────────────────────────────────────────
+function updateHeader(){
+  const s=load(cid);
+  document.getElementById('g-score').textContent=s.score+' pt';
+  document.getElementById('g-progress').style.width=(s.q/QUESTIONS.length*100)+'%';
+  document.getElementById('q-prog').textContent='('+s.q+'/10)';
+}
+
+// ── QUESTIONS ─────────────────────────────────────────────────
+function renderQ(){
+  if(!cid)return;
+  updateHeader();
+  const s=load(cid);
+  const c=getCar();
+  if(s.q>=QUESTIONS.length){
+    document.getElementById('final-pts').textContent=s.score;
+    document.getElementById('final-sub').textContent='taškai · '+c.name;
+    show('complete');
+    return;
+  }
+  const qIdx=c.route[s.q];
+  const q=QUESTIONS[qIdx];
+  const hints=s.answers[qIdx]?.hints||0;
+  document.getElementById('main-panel').innerHTML=`
+    <div class="q-content">
+      <div>
+        <div class="location-tag">📍 ${q.location}</div>
+        <div class="q-num" style="margin-top:.5rem">Klausimas ${s.q+1} iš 10</div>
+        <div class="q-text" style="margin-top:.5rem">${q.text}</div>
+      </div>
+      <div class="hint-box">
+        <div class="hint-row" onclick="useHint(0,${qIdx})">
+          <span>Užuomina 1</span>
+          <span class="hint-pill ${hints>0?'used':''}" id="hp0">${hints>0?'panaudota':'−1 pt'}</span>
+        </div>
+        <div class="hint-body ${hints>0?'open':''}" id="h0">${q.hints[0]}</div>
+      </div>
+      <div class="hint-box">
+        <div class="hint-row" onclick="useHint(1,${qIdx})">
+          <span>Užuomina 2</span>
+          <span class="hint-pill ${hints>1?'used':''}" id="hp1">${hints>1?'panaudota':'−1 pt'}</span>
+        </div>
+        <div class="hint-body ${hints>1?'open':''}" id="h1">${q.hints[1]}</div>
+      </div>
+      <div class="fb ok" id="fb-ok">✓ Teisingai!</div>
+      <div class="fb err" id="fb-err">✗ Neteisingai — bandykite dar kartą</div>
+      <input class="ans-input" id="ans" placeholder="Įveskite atsakymą…" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <button class="submit-btn" onclick="submitAnswer(${qIdx})">Patvirtinti</button>
+      <button class="skip-btn" onclick="skipQ()">Praleisti klausimą (0 pt)</button>
+    </div>`;
+  const inp=document.getElementById('ans');
+  if(inp)inp.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();submitAnswer(qIdx);}});
+}
+
+function useHint(idx,qIdx){
+  const s=load(cid);
+  if(!s.answers[qIdx])s.answers[qIdx]={hints:0};
+  if(idx===0&&s.answers[qIdx].hints===0){s.answers[qIdx].hints=1;persist(cid,s);}
+  else if(idx===1&&s.answers[qIdx].hints<2){s.answers[qIdx].hints=2;persist(cid,s);}
+  document.getElementById('h'+idx)?.classList.add('open');
+  const pill=document.getElementById('hp'+idx);
+  if(pill){pill.textContent='panaudota';pill.classList.add('used');}
+}
+
+function submitAnswer(qIdx){
+  const inp=document.getElementById('ans');
+  if(!inp||!inp.value.trim())return;
+  const s=load(cid);
+  const c=getCar();
+  const q=QUESTIONS[qIdx];
+  const clean=str=>str.toLowerCase().replace(/\s+/g,' ').trim();
+  const ua=clean(inp.value),ca=clean(q.answer);
+  const ok=ua===ca||ua.includes(ca)||ca.includes(ua);
+  if(ok){
+    const hints=s.answers[qIdx]?.hints||0;
+    const p=calcPts(hints);
+    s.score+=p;
+    persist(cid,s);
+    updateHeader();
+    sync({team:c.name,question:'K'+(s.q+1),location:q.location,points:p,hints:hints,action:'atsakyta'});
+    const fb=document.getElementById('fb-ok');
+    if(fb){fb.textContent='✓ Teisingai! +'+p+' pt';fb.classList.add('show');}
+    setTimeout(()=>{s.q++;persist(cid,s);renderQ();},1300);
+  }else{
+    const fb=document.getElementById('fb-err');
+    if(fb){fb.classList.add('show');setTimeout(()=>fb.classList.remove('show'),2000);}
+  }
+}
+
+function skipQ(){
+  const s=load(cid);
+  const c=getCar();
+  const qIdx=c.route[s.q];
+  const q=QUESTIONS[qIdx];
+  sync({team:c.name,question:'K'+(s.q+1),location:q.location,points:0,hints:s.answers[qIdx]?.hints||0,action:'praleista'});
+  s.q++;
+  persist(cid,s);
+  renderQ();
+}
+
+// ── BONUS PHOTOS ──────────────────────────────────────────────
+const fileInput=document.getElementById('file-input');
+
+function openPicker(bid){pendingBid=bid;fileInput.value='';fileInput.click();}
+
+fileInput.addEventListener('change',function(){
+  const file=this.files&&this.files[0];
+  if(!file||!pendingBid||!cid)return;
+  const bid=pendingBid;pendingBid=null;
+  const reader=new FileReader();
+  reader.onerror=()=>alert('Nepavyko nuskaityti nuotraukos.');
+  reader.onload=function(e){
+    const dataUrl=e.target.result;
+    if(!dataUrl||!dataUrl.startsWith('data:image')){alert('Nepavyko apdoroti nuotraukos.');return;}
+    const img=new Image();
+    const finish=src=>{
+      photos[cid+'_'+bid]=src;
+      const s=load(cid);
+      s.bonusDone[bid]=true;
+      persist(cid,s);
+      sync({team:getCar().name,question:'Bonus '+bid,location:'—',points:0,hints:0,action:'bonus nuotrauka'});
+      renderBonus();
+    };
+    img.onerror=()=>finish(dataUrl);
+    img.onload=()=>{
+      try{
+        const maxW=1080,scale=img.naturalWidth>maxW?maxW/img.naturalWidth:1;
+        const w=Math.round(img.naturalWidth*scale),h=Math.round(img.naturalHeight*scale);
+        const canvas=document.createElement('canvas');
+        canvas.width=w;canvas.height=h;
+        canvas.getContext('2d').drawImage(img,0,0,w,h);
+        finish(canvas.toDataURL('image/jpeg',0.82));
+      }catch(err){finish(dataUrl);}
+    };
+    img.src=dataUrl;
+  };
+  reader.readAsDataURL(file);
+});
+
+function renderBonus(){
+  if(!cid)return;
+  const s=load(cid);
+  const done=Object.keys(s.bonusDone).length;
+  document.getElementById('bonus-panel').innerHTML=`<div class="bonus-content">
+    <div class="bonus-header-row">
+      <span style="font-size:.85rem;color:var(--muted)">Foto įrodymai</span>
+      <span style="font-size:.85rem;color:var(--gold);font-weight:500">${done}/${BONUS.length} atlikta</span>
+    </div>
+    ${BONUS.map((b,i)=>{
+      const dataUrl=photos[cid+'_'+b.id]||null;
+      return `<div class="bonus-card">
+        <div class="bonus-card-body">
+          <div class="bonus-title">${i+1}. ${b.text}</div>
+          <div class="bonus-label">📷 Bonus užduotis</div>
+          <button class="upload-btn" onclick="openPicker('${b.id}')">📷 &nbsp;${dataUrl?'Pakeisti nuotrauką':'Įkelti nuotrauką'}</button>
+        </div>
+        ${dataUrl?`<img src="${dataUrl}" class="photo-preview" alt="">
+          <div class="photo-actions">
+            <span>✓ Nuotrauka įkelta</span>
+            <button class="replace-btn" onclick="openPicker('${b.id}')">Pakeisti</button>
+          </div>`:''}
+      </div>`;
+    }).join('')}
+  </div>`;
+}
+
+// ── INIT ──────────────────────────────────────────────────────
+if(cid){
+  const c=getCar();
+  if(c){
+    document.getElementById('g-pill').textContent=c.name;
+    document.getElementById('g-pill').style.background=c.color;
+    show('game');
+    switchTab('main');
+  } else {
+    doLogout();
+  }
+}
+</script>
+</body>
+</html>
